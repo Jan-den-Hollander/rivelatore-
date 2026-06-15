@@ -1,0 +1,1666 @@
+<!--
+================================================================================
+  Rivelatore di Uccelli — Strumento di Rilevamento
+  Versione 1.0 — 2025
+================================================================================
+  Copyright (c) 2025 Jan den Hollander
+  Tutti i diritti riservati.
+
+  Quest'opera è protetta dal diritto d'autore (Legge 633/1941, Italia;
+  Auteurswet 1912, Paesi Bassi) e dalla Convenzione di Berna.
+  È vietata la riproduzione, distribuzione o creazione di opere derivate
+  senza esplicito consenso scritto dell'autore.
+
+  Contact: jandenhollander@duck.com
+================================================================================
+-->
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Rivelatore di Uccelli</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
+
+:root {
+  --linen:   #f4efe4;
+  --cream:   #ede5d4;
+  --sage:    #7a9e7e;
+  --sage-d:  #4d7252;
+  --sage-l:  #b8d0b8;
+  --sky:     #9bbccc;
+  --sky-d:   #5a8eaa;
+  --bark:    #6b5540;
+  --bark-l:  #a08060;
+  --moss:    #3d5e3a;
+  --sand:    #cfc0a0;
+  --shadow:  rgba(80,60,30,0.13);
+  --card-bg: rgba(255,252,245,0.82);
+  --border:  rgba(100,140,100,0.22);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--linen);
+  color: var(--bark);
+  font-family: 'Jost', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 55% at 10% 5%,  rgba(122,158,126,0.16) 0%, transparent 65%),
+    radial-gradient(ellipse 65% 55% at 92% 85%, rgba(155,188,204,0.18) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 45% at 55% 35%, rgba(207,192,160,0.13) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 38% at 25% 92%, rgba(122,158,126,0.11) 0%, transparent 65%);
+}
+
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 18px 15px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Intestazione ── */
+header { text-align: center; padding: 6px 0 2px; }
+
+header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 300;
+  font-size: 2.5rem;
+  color: var(--moss);
+  letter-spacing: 3px;
+  line-height: 1.05;
+}
+
+header h1 em {
+  display: block;
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--bark-l);
+  letter-spacing: 4px;
+  margin-top: 3px;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.branch-deco {
+  display: block; margin: 8px auto 0;
+  width: 130px; height: 30px;
+  opacity: 0.3;
+}
+
+/* ── Scheda ── */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 15px;
+  box-shadow: 0 2px 14px var(--shadow);
+}
+
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--sage-d);
+  margin-bottom: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── Fotocamera ── */
+.cam-wrap {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #b8c4b4;
+  aspect-ratio: 4/3;
+  box-shadow: 0 2px 18px var(--shadow);
+}
+
+#video {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#canvas { display: none; }
+
+.motion-ring {
+  position: absolute; inset: 0;
+  border-radius: 16px;
+  border: 3px solid transparent;
+  pointer-events: none;
+  transition: border-color 0.12s, box-shadow 0.12s;
+}
+.motion-ring.active {
+  border-color: var(--sage);
+  box-shadow: inset 0 0 28px rgba(122,158,126,0.25), 0 0 16px rgba(122,158,126,0.22);
+}
+
+.cam-badge {
+  position: absolute;
+  top: 10px; right: 10px;
+  background: rgba(255,252,245,0.78);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  font-size: 0.7rem;
+  color: var(--bark);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(4px);
+}
+
+/* Onde sonore animate */
+.ripple-wrap {
+  position: absolute;
+  bottom: 14px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 5px;
+  align-items: flex-end;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.ripple-wrap.vis { opacity: 1; }
+.rbar {
+  width: 4px;
+  background: rgba(255,252,245,0.8);
+  border-radius: 2px;
+  animation: rb 0.8s ease-in-out infinite alternate;
+}
+.rbar:nth-child(1){height:7px; animation-delay:0s}
+.rbar:nth-child(2){height:16px;animation-delay:.15s}
+.rbar:nth-child(3){height:11px;animation-delay:.3s}
+.rbar:nth-child(4){height:19px;animation-delay:.1s}
+.rbar:nth-child(5){height:8px; animation-delay:.25s}
+@keyframes rb { from{transform:scaleY(.35);opacity:.4} to{transform:scaleY(1);opacity:1} }
+
+/* ── Stato ── */
+.status-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 8px var(--shadow);
+}
+
+.sdot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--sand);
+  flex-shrink: 0;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.sdot.watch  { background: var(--sage);  box-shadow: 0 0 7px rgba(122,158,126,.7); }
+.sdot.motion { background: #c8a060; box-shadow: 0 0 8px rgba(200,160,96,.85); animation: bl .4s infinite alternate; }
+.sdot.sing   { background: var(--sky);   box-shadow: 0 0 8px rgba(155,188,204,.9); animation: bl .6s infinite alternate; }
+@keyframes bl { from{opacity:1} to{opacity:.3} }
+
+#stxt { font-size: 0.82rem; color: var(--bark-l); flex: 1; }
+
+/* ── Slot uccelli ── */
+.slots { display: flex; flex-direction: column; gap: 9px; }
+
+.slot {
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: rgba(255,252,245,0.55);
+  overflow: hidden;
+  transition: border-color .2s, box-shadow .2s;
+}
+.slot.sel {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 2px rgba(122,158,126,.16);
+}
+
+.slot-top {
+  display: flex; align-items: center; gap: 9px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.snum {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  font-size: 0.7rem;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--bark-l);
+  flex-shrink: 0;
+  transition: background .2s, color .2s;
+}
+.slot.sel .snum {
+  background: var(--sage); color: white; border-color: var(--sage-d);
+}
+
+.sname {
+  flex: 1;
+  font-size: 0.88rem;
+  color: var(--bark);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sname.empty { color: var(--sand); font-style: italic; font-size: 0.78rem; }
+
+.sacts { display: flex; gap: 5px; flex-shrink: 0; }
+
+.sbtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-size: 0.7rem;
+  color: var(--bark-l);
+  cursor: pointer;
+  font-family: 'Jost', sans-serif;
+  white-space: nowrap;
+  transition: background .15s;
+}
+.sbtn:active { background: var(--cream); }
+.sbtn.sel-btn {
+  border-color: var(--sage-l);
+  color: var(--sage-d);
+}
+.sbtn.sel-btn.active-sel {
+  background: var(--sage);
+  color: white;
+  border-color: var(--sage-d);
+}
+
+/* Dettaglio espandibile */
+.sdetail {
+  display: none;
+  padding: 0 12px 12px;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+}
+.sdetail.open { display: flex; }
+
+.name-input {
+  width: 100%;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 11px;
+  font-family: 'Jost', sans-serif;
+  font-size: 0.84rem;
+  color: var(--bark);
+  outline: none;
+}
+.name-input:focus { border-color: var(--sage); }
+
+.file-lbl {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--cream);
+  border: 1px dashed var(--sage-l);
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  color: var(--sage-d);
+  transition: background .15s;
+}
+.file-lbl:active { background: var(--sage-l); }
+.file-lbl input { display: none; }
+
+.dur-badge {
+  font-size: 0.7rem;
+  color: var(--sage-d);
+  background: rgba(122,158,126,.1);
+  border-radius: 6px;
+  padding: 4px 9px;
+  align-self: flex-start;
+}
+
+/* ── Impostazioni ── */
+.settings { display: flex; flex-direction: column; gap: 13px; }
+
+.slrow { display: flex; flex-direction: column; gap: 5px; }
+
+.sllbl {
+  display: flex; justify-content: space-between;
+  font-size: 0.77rem; color: var(--bark-l);
+}
+.sllbl strong { color: var(--sage-d); font-weight: 500; }
+
+input[type=range] {
+  -webkit-appearance: none;
+  width: 100%; height: 5px;
+  border-radius: 3px;
+  outline: none; cursor: pointer;
+  background: var(--cream);
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 21px; height: 21px;
+  border-radius: 50%;
+  background: var(--sage);
+  border: 2px solid white;
+  box-shadow: 0 1px 5px var(--shadow);
+}
+
+/* Toggle modalità durata */
+.toggle-row { display: flex; gap: 6px; }
+.tglbtn {
+  flex: 1; padding: 7px 4px;
+  border: 1px solid var(--border); border-radius: 8px;
+  background: var(--cream); color: var(--bark-l);
+  font-size: 0.72rem; font-family: 'Jost', sans-serif;
+  cursor: pointer; text-align: center;
+  transition: all .18s;
+}
+.tglbtn.on { background: var(--sage); color: white; border-color: var(--sage-d); }
+
+.info-note {
+  font-size: 0.72rem; color: var(--sage-d);
+  background: rgba(122,158,126,.09);
+  border-radius: 7px; padding: 6px 10px;
+  line-height: 1.5;
+}
+
+/* ── Avanzamento ── */
+.prog-wrap { display: none; flex-direction: column; gap: 5px; }
+.prog-wrap.vis { display: flex; }
+.prog-meta {
+  display: flex; justify-content: space-between;
+  font-size: 0.74rem; color: var(--bark-l);
+}
+.prog-track {
+  height: 5px; background: var(--cream);
+  border-radius: 3px; overflow: hidden;
+  border: 1px solid var(--border);
+}
+.prog-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--sage-l), var(--sage));
+  width: 0%; transition: width .5s linear;
+}
+
+/* ── Pulsante principale ── */
+#main-btn {
+  width: 100%; padding: 15px; border: none;
+  border-radius: 14px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; letter-spacing: 2px;
+  cursor: pointer; transition: all .25s;
+}
+#main-btn.start {
+  background: linear-gradient(135deg, var(--sage), var(--sage-d));
+  color: white; box-shadow: 0 4px 16px rgba(77,114,82,.32);
+}
+#main-btn.stop {
+  background: linear-gradient(135deg, #c09080, #8a5040);
+  color: white; box-shadow: 0 4px 16px rgba(138,80,64,.28);
+}
+#main-btn:active { transform: scale(0.985); opacity: 0.88; }
+
+footer {
+  text-align: center; font-size: 0.62rem;
+  color: var(--sand); letter-spacing: 1px; padding-top: 2px;
+}
+
+/* ── Pulsanti modalità nascosta ── */
+.hide-row {
+  display: flex; gap: 8px;
+}
+.hide-btn {
+  flex: 1; padding: 11px 8px;
+  border: 1px solid var(--border); border-radius: 12px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.95rem; letter-spacing: 1px;
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.hide-btn.wake {
+  background: rgba(155,188,204,0.15);
+  color: var(--sky-d); border-color: rgba(155,188,204,0.4);
+}
+.hide-btn.wake.on {
+  background: var(--sky); color: white; border-color: var(--sky-d);
+  box-shadow: 0 2px 10px rgba(155,188,204,.4);
+}
+.hide-btn.dim {
+  background: rgba(80,60,30,0.06);
+  color: var(--bark-l); border-color: var(--border);
+}
+.hide-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ── Modalità galleria ── */
+#gallery-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 998;
+  background: #000;
+  cursor: pointer;
+  overflow: hidden;
+}
+#gallery-overlay.vis { display: block; }
+
+#gallery-svg {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#gallery-hint {
+  position: absolute;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255,255,255,0.9);
+  font-family: sans-serif; font-size: 13px;
+  letter-spacing: 1px;
+  pointer-events: none;
+  transition: opacity 1.5s;
+  background: rgba(0,0,0,0.35);
+  padding: 6px 16px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* Pulsanti selezione dipinto */
+.art-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
+  margin-top: 4px;
+}
+.art-btn {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 4px;
+  background: var(--cream);
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: var(--bark-l);
+  text-align: center;
+  font-family: 'Jost', sans-serif;
+  transition: all .18s;
+  line-height: 1.4;
+}
+.art-btn.sel {
+  border-color: var(--sage);
+  background: rgba(122,158,126,.15);
+  color: var(--sage-d);
+}
+.art-btn .art-icon { font-size: 1.3rem; display: block; margin-bottom: 2px; }
+
+/* Anteprima foto personale */
+#own-photo-wrap {
+  display: none;
+  flex-direction: column;
+  gap: 6px;
+}
+#own-photo-wrap.vis { display: flex; }
+#own-photo-preview {
+  width: 100%; height: 80px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: none;
+}
+#own-photo-preview.vis { display: block; }
+
+/* Pulsante galleria */
+.hide-btn.gallery {
+  background: rgba(100,80,40,0.08);
+  color: var(--bark-l); border-color: var(--border);
+}
+.hide-btn.gallery.on {
+  background: linear-gradient(135deg, #8a6030, #5a3a10);
+  color: white; border-color: #5a3a10;
+}
+
+/* Overlay oscuramento */
+#dim-overlay {
+  display: none; position: fixed; inset: 0; z-index: 999;
+  background: #000; opacity: 0; transition: opacity 0.6s; cursor: pointer;
+}
+#dim-overlay.vis { display: block; }
+#dim-overlay.dark { opacity: 0.97; }
+#dim-overlay::after {
+  content: 'Tocca per mostrare lo schermo';
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.12); font-family: sans-serif;
+  font-size: 11px; letter-spacing: 1px; pointer-events: none;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Intestazione -->
+  <header>
+    <h1>Rivelatore <em>rilevamento movimento</em></h1>
+    <svg class="branch-deco" viewBox="0 0 130 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M8 22 Q35 8 65 15 Q95 22 122 10" stroke="#4d7252" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M28 15 Q23 6 18 3"  stroke="#4d7252" stroke-width="1" stroke-linecap="round"/>
+      <path d="M50 13 Q47 5 43 2"  stroke="#4d7252" stroke-width="1" stroke-linecap="round"/>
+      <path d="M75 16 Q79 7 83 4"  stroke="#4d7252" stroke-width="1" stroke-linecap="round"/>
+      <path d="M100 13 Q105 5 109 3" stroke="#4d7252" stroke-width="1" stroke-linecap="round"/>
+      <circle cx="18"  cy="3"  r="1.8" fill="#7a9e7e" opacity="0.55"/>
+      <circle cx="43"  cy="2"  r="1.8" fill="#7a9e7e" opacity="0.55"/>
+      <circle cx="83"  cy="4"  r="1.8" fill="#7a9e7e" opacity="0.55"/>
+      <circle cx="109" cy="3"  r="1.8" fill="#7a9e7e" opacity="0.55"/>
+    </svg>
+  </header>
+
+  <!-- Fotocamera -->
+  <div class="cam-wrap">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+    <div class="motion-ring" id="mring"></div>
+    <div class="ripple-wrap" id="ripple">
+      <div class="rbar"></div><div class="rbar"></div><div class="rbar"></div>
+      <div class="rbar"></div><div class="rbar"></div>
+    </div>
+    <div class="cam-badge" id="cam-badge" onclick="toggleCam()">📷 Frontale</div>
+  </div>
+
+  <!-- Stato -->
+  <div class="status-row">
+    <div class="sdot" id="sdot"></div>
+    <div id="stxt">Carica un MP3 e scegli un uccello per iniziare</div>
+  </div>
+
+  <!-- Uccelli -->
+  <div class="card">
+    <div class="card-title">🐦 Uccelli <span style="font-style:italic;font-size:0.65rem;color:var(--bark-l);letter-spacing:1px">(max. 5)</span></div>
+    <div class="slots" id="slots-container"></div>
+  </div>
+
+  <!-- Impostazioni -->
+  <div class="card">
+    <div class="card-title">⚙ Impostazioni</div>
+    <div class="settings">
+
+      <!-- Sensibilità -->
+      <div class="slrow">
+        <div class="sllbl">
+          <span>Sensibilità al movimento</span>
+          <strong id="lbl-sens">40</strong>
+        </div>
+        <input type="range" id="rng-sens" min="5" max="100" value="40"
+               oninput="updRange(this,'lbl-sens',false)">
+      </div>
+
+      <!-- Durata concerto -->
+      <div class="slrow">
+        <div class="sllbl" style="margin-bottom:5px">
+          <span>Durata del canto</span>
+          <strong id="lbl-dur">30 sec</strong>
+        </div>
+        <div class="toggle-row" style="margin-bottom:6px">
+          <button class="tglbtn on" id="dm-hand" onclick="setDurMode('manual')">Manuale</button>
+          <button class="tglbtn"    id="dm-mp3"  onclick="setDurMode('mp3')">MP3 completo</button>
+        </div>
+        <div id="dur-slider">
+          <input type="range" id="rng-dur" min="5" max="300" value="30"
+                 oninput="updRange(this,'lbl-dur',true)">
+        </div>
+        <div id="dur-note" class="info-note" style="display:none">
+          Verrà riprodotto l'intero file MP3, indipendentemente dallo slider.
+          La durata viene determinata automaticamente al caricamento del file.
+        </div>
+      </div>
+
+      <!-- Tempo di attesa -->
+      <div class="slrow">
+        <div class="sllbl">
+          <span>Pausa dopo il canto</span>
+          <strong id="lbl-cool">15 sec</strong>
+        </div>
+        <input type="range" id="rng-cool" min="3" max="180" value="15"
+               oninput="updRange(this,'lbl-cool',true)">
+      </div>
+
+      <!-- Bluetooth -->
+      <div class="slrow">
+        <div class="sllbl" style="margin-bottom:5px"><span>Riproduzione audio via</span></div>
+        <div class="toggle-row">
+          <button class="tglbtn on" id="bt-phone" onclick="setAudioOut('phone')">📱 Telefono</button>
+          <button class="tglbtn"    id="bt-blue"  onclick="setAudioOut('bluetooth')">🔵 Bluetooth</button>
+        </div>
+        <div id="bt-note" class="info-note" style="display:none">
+          Collega prima lo speaker Bluetooth dalle impostazioni del telefono, poi avvia qui.
+        </div>
+      </div>
+
+      <!-- Fotocamera -->
+      <div class="slrow">
+        <div class="sllbl" style="margin-bottom:5px"><span>Fotocamera</span></div>
+        <div class="toggle-row">
+          <button class="tglbtn" id="cb-back"  onclick="setCam('environment')">↩ Posteriore</button>
+          <button class="tglbtn on" id="cb-front" onclick="setCam('user')">↪ Frontale</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Avanzamento canto -->
+  <div class="prog-wrap" id="prog-wrap">
+    <div class="prog-meta">
+      <span id="prog-name">–</span>
+      <span id="prog-time">–</span>
+    </div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+  </div>
+
+  <!-- Scheda modalità nascosta -->
+  <div class="card">
+    <div class="card-title">📡 Modalità nascosta</div>
+    <div style="font-size:0.75rem;color:var(--bark-l);margin-bottom:10px;line-height:1.5">
+      Posiziona il telefono in modo discreto con lo speaker Bluetooth altrove.
+      Avvia prima il rilevamento, poi questi pulsanti diventano attivi.
+    </div>
+
+    <div style="font-size:0.72rem;color:var(--sage-d);margin-bottom:6px;letter-spacing:1px">SCEGLI UN DIPINTO</div>
+    <div class="art-grid" id="art-grid" style="grid-template-columns:repeat(4,1fr)">
+      <button class="art-btn sel" id="art0" onclick="selectArt(0)">
+        <span class="art-icon">🌿</span>Botanico
+      </button>
+      <button class="art-btn" id="art1" onclick="selectArt(1)">
+        <span class="art-icon">🌅</span>Paesaggio
+      </button>
+      <button class="art-btn" id="art2" onclick="selectArt(2)">
+        <span class="art-icon">🎨</span>Astratto
+      </button>
+      <button class="art-btn" id="art3" onclick="selectArt(3)">
+        <span class="art-icon">🖼</span>Foto mia
+      </button>
+    </div>
+    <!-- Carica foto personale -->
+    <div id="own-photo-wrap">
+      <label class="file-lbl" style="margin-top:4px">
+        📷 <span id="own-photo-lbl">Scegli foto dal telefono…</span>
+        <input type="file" accept="image/*" onchange="loadOwnPhoto(this)">
+      </label>
+      <img id="own-photo-preview" alt="anteprima">
+    </div>
+    <div style="font-size:0.65rem;color:var(--bark-l);margin:6px 0 10px;text-align:center">Tocca il dipinto per tornare</div>
+
+    <div class="hide-row" id="hide-row">
+      <button class="hide-btn wake" id="wake-btn" onclick="toggleWake()" disabled>
+        ☀ Tieni schermo attivo
+      </button>
+      <button class="hide-btn dim" id="dim-btn" onclick="dimScreen()" disabled>
+        🌑 Nascondi schermo
+      </button>
+      <button class="hide-btn gallery" id="gallery-btn" onclick="showGallery()" disabled>
+        🖼 Dipinto
+      </button>
+    </div>
+  </div>
+
+  <!-- Avvia/Ferma -->
+  <button id="main-btn" class="start" onclick="toggleDetect()">Inizia ad ascoltare</button>
+
+  <footer>Completamente offline · nessuna connessione richiesta</footer>
+</div>
+
+<!-- Overlay oscuramento: tocca per tornare -->
+<div id="dim-overlay" onclick="undimScreen()"></div>
+
+<!-- Overlay galleria: dipinto a schermo intero -->
+<div id="gallery-overlay">
+  <svg id="gallery-svg" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice"
+       xmlns="http://www.w3.org/2000/svg">
+    <!-- Riempito da JS -->
+  </svg>
+  <div id="gallery-hint">tocca per mostrare le impostazioni</div>
+</div>
+
+<script>
+// ═══════════════════════════════
+//  COSTANTI & STATO
+// ═══════════════════════════════
+var MAXSLOTS = 5;
+var running = false, singing = false, inCooldown = false;
+var facingMode = 'user';
+var durMode = 'manual';
+var stream = null, rafId = null, prevPx = null;
+var concertDurMs = 0, concertEnd = 0;
+var cTimer = null, pTimer = null;
+var selSlot = 0;
+var curAudio = null;
+var audioUnlocked = false;
+
+// Dati slot
+var slots = [];
+for (var i = 0; i < MAXSLOTS; i++) {
+  slots.push({ name: '', file: null, url: null, dur: null });
+}
+
+// ═══════════════════════════════
+//  LOCALSTORAGE — salva/carica
+// ═══════════════════════════════
+function saveSettings() {
+  try {
+    localStorage.setItem('rivelatore-uccelli', JSON.stringify({
+      sens:       document.getElementById('rng-sens').value,
+      dur:        document.getElementById('rng-dur').value,
+      cool:       document.getElementById('rng-cool').value,
+      durMode:    durMode,
+      facingMode: facingMode,
+      selSlot:    selSlot,
+      slotNames:  slots.map(function(s){ return s.name; }),
+      audioOut:   audioOut,
+      selArt:     selArt
+    }));
+  } catch(e) {}
+}
+
+function loadSettings() {
+  try {
+    var raw = localStorage.getItem('rivelatore-uccelli');
+    if (!raw) return;
+    var d = JSON.parse(raw);
+    if (d.sens)  { var rs = document.getElementById('rng-sens'); rs.value = d.sens; updRange(rs,'lbl-sens',false); }
+    if (d.dur)   { var rd = document.getElementById('rng-dur');  rd.value = d.dur;  updRange(rd,'lbl-dur',true); }
+    if (d.cool)  { var rc = document.getElementById('rng-cool'); rc.value = d.cool; updRange(rc,'lbl-cool',true); }
+    if (d.durMode)    setDurMode(d.durMode);
+    if (d.facingMode) { facingMode = d.facingMode; }
+    if (typeof d.selSlot === 'number') selSlot = d.selSlot;
+    if (d.slotNames) {
+      for (var i = 0; i < MAXSLOTS && i < d.slotNames.length; i++)
+        slots[i].name = d.slotNames[i] || '';
+    }
+    if (d.audioOut) { audioOut = d.audioOut; }
+    if (typeof d.selArt === 'number') { selArt = d.selArt; }
+  } catch(e) {}
+}
+
+function hookAutosave() {
+  ['rng-sens','rng-dur','rng-cool'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', saveSettings);
+  });
+}
+
+// ═══════════════════════════════
+//  SBLOCCO AUDIO ANDROID
+// ═══════════════════════════════
+function unlockAudio() {
+  if (audioUnlocked) return;
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    var buf = ctx.createBuffer(1, 1, 22050);
+    var src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+    setTimeout(function(){ ctx.close(); }, 500);
+    audioUnlocked = true;
+  } catch(e) {}
+}
+
+// ═══════════════════════════════
+//  INIZIALIZZAZIONE
+// ═══════════════════════════════
+window.onload = function() {
+  loadSettings();
+  buildAllSlots();
+  updRange(document.getElementById('rng-sens'), 'lbl-sens', false);
+  updRange(document.getElementById('rng-dur'),  'lbl-dur',  true);
+  updRange(document.getElementById('rng-cool'), 'lbl-cool', true);
+  hookAutosave();
+
+  document.addEventListener('touchstart', unlockAudio, { once: true, passive: true });
+  document.addEventListener('click',      unlockAudio, { once: true });
+
+  var gallOv = document.getElementById('gallery-overlay');
+  if (gallOv) {
+    gallOv.addEventListener('touchend', function(e) {
+      e.preventDefault();
+      hideGallery();
+    });
+    gallOv.addEventListener('click', hideGallery);
+  }
+
+  var hasNames = slots.some(function(s){ return s.name; });
+  if (hasNames) setStatus('', '⚠ Impostazioni ripristinate — ricarica gli MP3');
+};
+
+// ═══════════════════════════════
+//  COSTRUZIONE SLOT
+// ═══════════════════════════════
+function buildAllSlots() {
+  var c = document.getElementById('slots-container');
+  c.innerHTML = '';
+  for (var i = 0; i < MAXSLOTS; i++) c.appendChild(buildSlot(i));
+  hiliteSlots();
+}
+
+function buildSlot(idx) {
+  var s = slots[idx];
+  var label = slotLabel(idx);
+  var isEmpty = !label;
+
+  var wrap = document.createElement('div');
+  wrap.className = 'slot' + (idx === selSlot ? ' sel' : '');
+  wrap.id = 'slot-' + idx;
+
+  var top = document.createElement('div');
+  top.className = 'slot-top';
+  top.onclick = (function(i){ return function(){ toggleDetail(i); }; })(idx);
+
+  var num = document.createElement('div');
+  num.className = 'snum';
+  num.textContent = idx + 1;
+
+  var nm = document.createElement('div');
+  nm.className = 'sname' + (isEmpty ? ' empty' : '');
+  nm.id = 'sname-' + idx;
+  nm.textContent = isEmpty ? 'Vuoto — tocca per configurare' : label;
+
+  var acts = document.createElement('div');
+  acts.className = 'sacts';
+  acts.id = 'sacts-' + idx;
+
+  if (s.url) {
+    var tb = document.createElement('button');
+    tb.className = 'sbtn';
+    tb.textContent = '▶ Test';
+    tb.onclick = (function(i){ return function(e){ e.stopPropagation(); testSlot(i); }; })(idx);
+    acts.appendChild(tb);
+  }
+
+  var sb = document.createElement('button');
+  sb.className = 'sbtn sel-btn' + (idx === selSlot ? ' active-sel' : '');
+  sb.id = 'selbtn-' + idx;
+  sb.textContent = idx === selSlot ? '✓ Attivo' : 'Scegli';
+  sb.onclick = (function(i){ return function(e){ e.stopPropagation(); chooseSel(i); }; })(idx);
+  acts.appendChild(sb);
+
+  top.appendChild(num);
+  top.appendChild(nm);
+  top.appendChild(acts);
+
+  var det = document.createElement('div');
+  det.className = 'sdetail';
+  det.id = 'sdet-' + idx;
+
+  var ni = document.createElement('input');
+  ni.type = 'text';
+  ni.className = 'name-input';
+  ni.id = 'ninp-' + idx;
+  ni.placeholder = 'Nome uccello (facoltativo)';
+  ni.value = s.name;
+  ni.oninput = (function(i){ return function(){ onNameInput(i, this.value); }; })(idx);
+
+  var fl = document.createElement('label');
+  fl.className = 'file-lbl';
+  fl.innerHTML = '🎵 <span id="flbl-' + idx + '">' + (s.url ? '✓ ' + (s.file ? s.file.name : 'caricato') : 'Scegli file MP3…') + '</span>';
+  var fi = document.createElement('input');
+  fi.type = 'file';
+  fi.accept = 'audio/*';
+  fi.onchange = (function(i){ return function(){ onFileChange(i, this); }; })(idx);
+  fl.appendChild(fi);
+
+  det.appendChild(ni);
+  det.appendChild(fl);
+
+  if (s.dur !== null) {
+    var db = document.createElement('div');
+    db.className = 'dur-badge';
+    db.id = 'durbadge-' + idx;
+    db.textContent = '⏱ Durata: ' + fmtSec(s.dur);
+    det.appendChild(db);
+  }
+
+  wrap.appendChild(top);
+  wrap.appendChild(det);
+  return wrap;
+}
+
+function toggleDetail(idx) {
+  for (var i = 0; i < MAXSLOTS; i++) {
+    var d = document.getElementById('sdet-' + i);
+    if (d) d.classList.toggle('open', i === idx && !d.classList.contains('open'));
+  }
+}
+
+function chooseSel(idx) {
+  selSlot = idx;
+  hiliteSlots();
+  var label = slotLabel(idx);
+  setStatus('', label ? 'Uccello selezionato: ' + label : 'Uccello ' + (idx+1) + ' selezionato (ancora vuoto)');
+  saveSettings();
+}
+
+function hiliteSlots() {
+  for (var i = 0; i < MAXSLOTS; i++) {
+    var el = document.getElementById('slot-' + i);
+    if (el) el.className = 'slot' + (i === selSlot ? ' sel' : '');
+    var sb = document.getElementById('selbtn-' + i);
+    if (sb) {
+      sb.className = 'sbtn sel-btn' + (i === selSlot ? ' active-sel' : '');
+      sb.textContent = i === selSlot ? '✓ Attivo' : 'Scegli';
+    }
+  }
+}
+
+function onNameInput(idx, val) {
+  slots[idx].name = val.trim();
+  refreshSlotName(idx);
+  saveSettings();
+}
+
+function onFileChange(idx, input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (slots[idx].url) URL.revokeObjectURL(slots[idx].url);
+
+  var url = URL.createObjectURL(file);
+  slots[idx].file = file;
+  slots[idx].url  = url;
+  slots[idx].dur  = null;
+
+  if (!slots[idx].name) {
+    var auto = file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ');
+    slots[idx].name = auto;
+    var ni = document.getElementById('ninp-' + idx);
+    if (ni) ni.value = auto;
+  }
+
+  var tmp = new Audio();
+  tmp.src = url;
+  tmp.onloadedmetadata = (function(i, u){ return function() {
+    if (slots[i].url !== u) return;
+    var d = isFinite(this.duration) ? this.duration : null;
+    slots[i].dur = d;
+    var badge = document.getElementById('durbadge-' + i);
+    if (badge) {
+      badge.textContent = '⏱ Durata: ' + (d ? fmtSec(d) : 'sconosciuta');
+    } else {
+      var det = document.getElementById('sdet-' + i);
+      if (det) {
+        var db = document.createElement('div');
+        db.className = 'dur-badge';
+        db.id = 'durbadge-' + i;
+        db.textContent = '⏱ Durata: ' + (d ? fmtSec(d) : 'sconosciuta');
+        det.appendChild(db);
+      }
+    }
+  }; })(idx, url);
+
+  var flbl = document.getElementById('flbl-' + idx);
+  if (flbl) flbl.textContent = '✓ ' + file.name;
+
+  var acts = document.getElementById('sacts-' + idx);
+  if (acts && !document.getElementById('tbtn-' + idx)) {
+    var tb = document.createElement('button');
+    tb.className = 'sbtn';
+    tb.id = 'tbtn-' + idx;
+    tb.textContent = '▶ Test';
+    tb.onclick = (function(i){ return function(e){ e.stopPropagation(); testSlot(i); }; })(idx);
+    acts.insertBefore(tb, acts.firstChild);
+  }
+
+  refreshSlotName(idx);
+}
+
+function refreshSlotName(idx) {
+  var nm = document.getElementById('sname-' + idx);
+  if (!nm) return;
+  var label = slotLabel(idx);
+  nm.textContent = label || 'Vuoto — tocca per configurare';
+  nm.className = 'sname' + (label ? '' : ' empty');
+}
+
+function slotLabel(idx) {
+  var s = slots[idx];
+  if (s.name) return s.name;
+  if (s.file) return s.file.name.replace(/\.[^.]+$/, '');
+  return '';
+}
+
+function testSlot(idx) {
+  unlockAudio();
+  stopAudio();
+  var s = slots[idx];
+  if (!s.url) return;
+  curAudio = new Audio(s.url);
+  curAudio.volume = 1;
+  var p = curAudio.play();
+  if (p && p.then) p.catch(function(){});
+  setStatus('sing', '▶ Test: ' + (slotLabel(idx) || 'uccello ' + (idx+1)));
+  curAudio.onended = function() {
+    curAudio = null;
+    if (!running) setStatus('', 'Test completato');
+  };
+}
+
+// ═══════════════════════════════
+//  FOTOCAMERA
+// ═══════════════════════════════
+function setCam(mode) {
+  facingMode = mode;
+  document.getElementById('cb-back').className  = 'tglbtn' + (mode === 'environment' ? ' on' : '');
+  document.getElementById('cb-front').className = 'tglbtn' + (mode === 'user'        ? ' on' : '');
+  document.getElementById('cam-badge').textContent = mode === 'user' ? '📷 Frontale' : '📷 Posteriore';
+  if (running) { stopCamera(); startCamera(function(e){ if(e) { setStatus('','Errore fotocamera: '+e.message); stopDetect(); } }); }
+  saveSettings();
+}
+
+function toggleCam() { setCam(facingMode === 'user' ? 'environment' : 'user'); }
+
+function startCamera(cb) {
+  var c = { video: { facingMode: { ideal: facingMode }, width:{ideal:320}, height:{ideal:240} }, audio: false };
+  function ok(s) {
+    stream = s;
+    var v = document.getElementById('video');
+    v.srcObject = s;
+    v.style.transform = facingMode === 'user' ? 'scaleX(-1)' : 'none';
+    v.play();
+    if (cb) cb(null);
+  }
+  function fail(e) { if (cb) cb(e); }
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+    navigator.mediaDevices.getUserMedia(c).then(ok).catch(fail);
+  else if (navigator.getUserMedia)
+    navigator.getUserMedia(c, ok, fail);
+  else
+    fail(new Error('Fotocamera non disponibile'));
+}
+
+function stopCamera() {
+  if (stream) { (stream.getTracks ? stream.getTracks() : []).forEach(function(t){ t.stop(); }); stream = null; }
+  document.getElementById('video').srcObject = null;
+}
+
+// ═══════════════════════════════
+//  CICLO DI RILEVAMENTO
+// ═══════════════════════════════
+function detectLoop() {
+  if (!running) return;
+  var vid = document.getElementById('video');
+  var cnv = document.getElementById('canvas');
+  if (vid.readyState < 2) { rafId = requestAnimationFrame(detectLoop); return; }
+
+  var W = 80, H = 60;
+  cnv.width = W; cnv.height = H;
+  var ctx = cnv.getContext('2d');
+  ctx.drawImage(vid, 0, 0, W, H);
+  var px = ctx.getImageData(0, 0, W, H).data;
+
+  var diff = 0;
+  if (prevPx) {
+    for (var i = 0, n = W*H*4; i < n; i+=4)
+      diff += (Math.abs(px[i]-prevPx[i]) + Math.abs(px[i+1]-prevPx[i+1]) + Math.abs(px[i+2]-prevPx[i+2])) / 3;
+    diff /= (W*H);
+  }
+  prevPx = new Uint8ClampedArray(px);
+
+  var thresh = parseInt(document.getElementById('rng-sens').value) * 0.55;
+  var motion = prevPx && diff > thresh;
+  document.getElementById('mring').className = 'motion-ring' + (motion ? ' active' : '');
+
+  if (motion && !singing && !inCooldown) startConcert();
+  rafId = requestAnimationFrame(detectLoop);
+}
+
+// ═══════════════════════════════
+//  CANTO
+// ═══════════════════════════════
+function startConcert() {
+  var s = slots[selSlot];
+  if (!s.url) {
+    setStatus('motion', 'Movimento — nessun MP3 nell\'uccello ' + (selSlot+1));
+    return;
+  }
+
+  singing = true;
+  setRipple(true);
+  stopAudio();
+
+  curAudio = new Audio(s.url);
+  curAudio.volume = 1;
+  curAudio.preload = 'auto';
+
+  function doPlay(onReady) {
+    var p = curAudio.play();
+    if (p && p.then) {
+      p.then(onReady).catch(function(e) {
+        setTimeout(function() {
+          if (curAudio) curAudio.play().catch(function(){});
+          onReady();
+        }, 200);
+      });
+    } else {
+      onReady();
+    }
+  }
+
+  if (durMode === 'mp3') {
+    concertDurMs = s.dur ? s.dur * 1000 : 0;
+    doPlay(function() {
+      if (concertDurMs > 0) {
+        concertEnd = Date.now() + concertDurMs;
+        cTimer = setTimeout(endConcert, concertDurMs);
+      } else {
+        concertEnd = 0;
+        if (curAudio) curAudio.onended = endConcert;
+      }
+    });
+  } else {
+    var manualMs = parseInt(document.getElementById('rng-dur').value) * 1000;
+    concertDurMs = (s.dur && s.dur * 1000 <= manualMs) ? s.dur * 1000 : manualMs;
+    concertEnd = Date.now() + concertDurMs;
+    doPlay(function() {
+      cTimer = setTimeout(endConcert, concertDurMs);
+    });
+  }
+
+  var label = slotLabel(selSlot) || ('Uccello ' + (selSlot+1));
+  setStatus('sing', '🎵 ' + label + ' canta…');
+  showProg(true);
+  tickProg();
+}
+
+function endConcert() {
+  stopAudio();
+  singing = false;
+  setRipple(false);
+  showProg(false);
+  if (cTimer) { clearTimeout(cTimer); cTimer = null; }
+  if (pTimer) { clearTimeout(pTimer); pTimer = null; }
+  startCooldown();
+}
+
+function startCooldown() {
+  inCooldown = true;
+  var coolMs = parseInt(document.getElementById('rng-cool').value) * 1000;
+  var end = Date.now() + coolMs;
+  function tick() {
+    if (!running) return;
+    var left = Math.ceil((end - Date.now()) / 1000);
+    if (left <= 0) { inCooldown = false; setStatus('watch', '👀 In attesa di movimento…'); return; }
+    setStatus('watch', '⏳ Pausa: ancora ' + fmtSec(left));
+    setTimeout(tick, 500);
+  }
+  tick();
+}
+
+function stopAudio() {
+  if (curAudio) { curAudio.pause(); curAudio.onended = null; curAudio = null; }
+}
+
+// ═══════════════════════════════
+//  BARRA DI AVANZAMENTO
+// ═══════════════════════════════
+function showProg(on) {
+  document.getElementById('prog-wrap').className = 'prog-wrap' + (on ? ' vis' : '');
+  if (!on) document.getElementById('prog-fill').style.width = '0%';
+}
+
+function tickProg() {
+  if (!singing) return;
+  document.getElementById('prog-name').textContent = slotLabel(selSlot) || ('Uccello ' + (selSlot+1));
+  if (concertDurMs > 0 && concertEnd > 0) {
+    var elapsed = Date.now() - (concertEnd - concertDurMs);
+    var pct = Math.min(100, elapsed / concertDurMs * 100);
+    var left = Math.max(0, Math.ceil((concertEnd - Date.now()) / 1000));
+    document.getElementById('prog-fill').style.width = pct + '%';
+    document.getElementById('prog-time').textContent = fmtSec(left) + ' rimanenti';
+  } else {
+    var t = (Date.now() / 2200) % 1;
+    var b = t < 0.5 ? t*2 : (1-t)*2;
+    document.getElementById('prog-fill').style.width = (15 + b*75) + '%';
+    document.getElementById('prog-time').textContent = 'in corso…';
+  }
+  if (singing) pTimer = setTimeout(tickProg, 250);
+}
+
+// ═══════════════════════════════
+//  AVVIA / FERMA
+// ═══════════════════════════════
+function toggleDetect() { running ? stopDetect() : startDetect(); }
+
+function startDetect() {
+  if (!slots[selSlot].url) {
+    setStatus('', 'Carica prima un MP3 per l\'uccello ' + (selSlot+1));
+    return;
+  }
+  unlockAudio();
+
+  setStatus('', 'Avvio fotocamera…');
+  startCamera(function(err) {
+    if (err) { setStatus('', 'Errore fotocamera: ' + (err.message || err)); return; }
+    running = true; prevPx = null; inCooldown = false;
+    var btn = document.getElementById('main-btn');
+    btn.textContent = 'Ferma ascolto'; btn.className = 'stop';
+    setStatus('watch', '👀 In attesa di movimento…');
+    document.getElementById('wake-btn').disabled = false;
+    document.getElementById('dim-btn').disabled = false;
+    document.getElementById('gallery-btn').disabled = false;
+    if (!wakeActive) requestWake();
+    rafId = requestAnimationFrame(detectLoop);
+  });
+}
+
+function stopDetect() {
+  running = false; singing = false; inCooldown = false;
+  if (rafId)  { cancelAnimationFrame(rafId); rafId = null; }
+  if (cTimer) { clearTimeout(cTimer); cTimer = null; }
+  if (pTimer) { clearTimeout(pTimer); pTimer = null; }
+  stopAudio(); stopCamera(); setRipple(false); showProg(false);
+  document.getElementById('mring').className = 'motion-ring';
+  var btn = document.getElementById('main-btn');
+  btn.textContent = 'Inizia ad ascoltare'; btn.className = 'start';
+  document.getElementById('wake-btn').disabled = true;
+  document.getElementById('dim-btn').disabled = true;
+  document.getElementById('gallery-btn').disabled = true;
+  if (galleryOpen) hideGallery();
+  if (dimmed) undimScreen();
+  releaseWake();
+  setStatus('', 'Fermato');
+}
+
+window.onbeforeunload = function() { stopDetect(); };
+
+// ═══════════════════════════════
+//  GALLERIA — DIPINTI SVG
+// ═══════════════════════════════
+var selArt = 0;
+var galleryOpen = false;
+
+var artworks = [
+
+// 0 — BOTANICO
+`<rect width="400" height="700" fill="#f0ebe0"/>
+<rect width="400" height="700" fill="url(#pg)"/>
+<defs>
+  <radialGradient id="pg" cx="50%" cy="40%" r="70%">
+    <stop offset="0%" stop-color="#faf6ee"/>
+    <stop offset="100%" stop-color="#e8dfc8"/>
+  </radialGradient>
+</defs>
+<path d="M60 700 Q80 500 120 350 Q150 220 180 120" stroke="#5a3a1a" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+<path d="M120 350 Q160 310 200 280" stroke="#5a3a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+<path d="M140 430 Q100 390 70 360" stroke="#5a3a1a" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+<path d="M160 280 Q220 240 260 200" stroke="#5a3a1a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+<ellipse cx="205" cy="278" rx="28" ry="12" fill="#6a8a4a" opacity="0.8" transform="rotate(-30 205 278)"/>
+<ellipse cx="262" cy="198" rx="22" ry="9" fill="#7a9a5a" opacity="0.75" transform="rotate(-50 262 198)"/>
+<ellipse cx="98" cy="363" rx="20" ry="8" fill="#5a7a3a" opacity="0.7" transform="rotate(20 98 363)"/>
+<ellipse cx="175" cy="118" rx="18" ry="7" fill="#8aaa6a" opacity="0.75" transform="rotate(-70 175 118)"/>
+<ellipse cx="145" cy="432" rx="24" ry="9" fill="#6a8a4a" opacity="0.7" transform="rotate(15 145 432)"/>
+<path d="M180 120 Q170 80 165 50" stroke="#5a3a1a" stroke-width="1.2" fill="none"/>
+<path d="M165 50 Q145 30 130 15" stroke="#5a3a1a" stroke-width="1" fill="none"/>
+<path d="M165 50 Q185 25 200 10" stroke="#5a3a1a" stroke-width="1" fill="none"/>
+<g transform="translate(130,15)">
+  <circle r="14" fill="#d4607a" opacity="0.9"/>
+  <circle r="9" fill="#e0788a"/>
+  <circle r="5" fill="#f0a0aa"/>
+  <circle r="2" fill="#fff" opacity="0.6"/>
+</g>
+<g transform="translate(200,10)">
+  <circle r="11" fill="#c05060" opacity="0.85"/>
+  <circle r="7" fill="#d87080"/>
+  <circle r="4" fill="#eeaab0"/>
+</g>
+<g transform="translate(260,200)">
+  <circle r="13" fill="#d4607a" opacity="0.8"/>
+  <circle r="8" fill="#e07888"/>
+  <circle r="4" fill="#f0a8b0"/>
+</g>
+<g transform="translate(70,360)">
+  <circle r="6" fill="#e8c060"/>
+  <circle r="3" fill="#f8e080"/>
+</g>
+<g transform="translate(145,430)">
+  <circle r="5" fill="#e0a050"/>
+  <circle r="2.5" fill="#f8c870"/>
+</g>
+<g transform="translate(300,320)">
+  <ellipse cx="-12" cy="-8" rx="18" ry="12" fill="#c87820" opacity="0.85" transform="rotate(-20 -12 -8)"/>
+  <ellipse cx="12" cy="-8" rx="18" ry="12" fill="#d08828" opacity="0.85" transform="rotate(20 12 -8)"/>
+  <ellipse cx="-8" cy="8" rx="12" ry="8" fill="#b06818" opacity="0.8" transform="rotate(-15 -8 8)"/>
+  <ellipse cx="8" cy="8" rx="12" ry="8" fill="#b86820" opacity="0.8" transform="rotate(15 8 8)"/>
+  <ellipse cx="0" cy="0" rx="3" ry="10" fill="#2a1a0a"/>
+  <line x1="0" y1="-10" x2="-15" y2="-22" stroke="#2a1a0a" stroke-width="0.8"/>
+  <line x1="0" y1="-10" x2="15" y2="-22" stroke="#2a1a0a" stroke-width="0.8"/>
+</g>
+<rect x="20" y="20" width="360" height="660" fill="none" stroke="#8a6a3a" stroke-width="1.5" opacity="0.4" rx="4"/>
+<rect x="26" y="26" width="348" height="648" fill="none" stroke="#8a6a3a" stroke-width="0.5" opacity="0.25" rx="3"/>
+<text x="200" y="670" text-anchor="middle" font-family="Georgia,serif" font-size="13" fill="#8a6a3a" opacity="0.6" font-style="italic">Studio Botanico</text>`,
+
+// 1 — PAESAGGIO
+`<defs>
+  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1a2a4a"/>
+    <stop offset="35%" stop-color="#c04820"/>
+    <stop offset="55%" stop-color="#e87830"/>
+    <stop offset="70%" stop-color="#f8c060"/>
+    <stop offset="100%" stop-color="#f0a840"/>
+  </linearGradient>
+  <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#e06028"/>
+    <stop offset="40%" stop-color="#c04820"/>
+    <stop offset="100%" stop-color="#1a1a2a"/>
+  </linearGradient>
+  <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#fff8d0"/>
+    <stop offset="40%" stop-color="#f8e060"/>
+    <stop offset="100%" stop-color="#f0a020" stop-opacity="0"/>
+  </radialGradient>
+</defs>
+<rect width="400" height="700" fill="url(#sky)"/>
+<circle cx="200" cy="370" r="55" fill="url(#sun)" opacity="0.95"/>
+<circle cx="200" cy="370" r="38" fill="#fff8c0" opacity="0.9"/>
+<circle cx="200" cy="370" r="25" fill="#fffde0"/>
+<ellipse cx="80" cy="200" rx="60" ry="18" fill="#e87030" opacity="0.5"/>
+<ellipse cx="50" cy="190" rx="35" ry="14" fill="#d05020" opacity="0.4"/>
+<ellipse cx="320" cy="160" rx="70" ry="20" fill="#e06020" opacity="0.45"/>
+<ellipse cx="350" cy="150" rx="40" ry="15" fill="#c84010" opacity="0.35"/>
+<rect x="0" y="420" width="400" height="280" fill="url(#water)"/>
+<ellipse cx="200" cy="450" rx="30" ry="80" fill="#f8d060" opacity="0.35"/>
+<ellipse cx="200" cy="500" rx="20" ry="60" fill="#f8e080" opacity="0.25"/>
+<path d="M0 440 Q50 435 100 440 Q150 445 200 440 Q250 435 300 440 Q350 445 400 440" stroke="#f8a030" stroke-width="0.8" fill="none" opacity="0.4"/>
+<path d="M0 460 Q60 455 120 460 Q180 465 240 460 Q300 455 360 460 Q380 463 400 460" stroke="#e08020" stroke-width="0.6" fill="none" opacity="0.3"/>
+<path d="M0 490 Q80 485 160 490 Q240 495 320 490 Q360 487 400 490" stroke="#c06010" stroke-width="0.5" fill="none" opacity="0.25"/>
+<rect x="0" y="280" width="12" height="145" fill="#0a0a14"/>
+<ellipse cx="6" cy="270" rx="20" ry="35" fill="#0a0a14"/>
+<rect x="20" y="300" width="8" height="125" fill="#0a0a14"/>
+<ellipse cx="24" cy="290" rx="15" ry="28" fill="#0a0a14"/>
+<rect x="35" y="320" width="6" height="105" fill="#0a0a14"/>
+<ellipse cx="38" cy="312" rx="12" ry="22" fill="#0a0a14"/>
+<rect x="388" y="290" width="12" height="135" fill="#0a0a14"/>
+<ellipse cx="394" cy="278" rx="22" ry="38" fill="#0a0a14"/>
+<rect x="370" y="310" width="8" height="115" fill="#0a0a14"/>
+<ellipse cx="374" cy="300" rx="16" ry="28" fill="#0a0a14"/>
+<line x1="55" y1="700" x2="60" y2="390" stroke="#1a0a04" stroke-width="2.5"/>
+<line x1="65" y1="700" x2="68" y2="400" stroke="#1a0a04" stroke-width="2"/>
+<line x1="75" y1="700" x2="72" y2="410" stroke="#1a0a04" stroke-width="2.2"/>
+<ellipse cx="60" cy="388" rx="5" ry="16" fill="#2a1004"/>
+<ellipse cx="68" cy="398" rx="4" ry="13" fill="#2a1004"/>
+<ellipse cx="72" cy="408" rx="4.5" ry="14" fill="#2a1004"/>
+<line x1="330" y1="700" x2="335" y2="395" stroke="#1a0a04" stroke-width="2.5"/>
+<line x1="342" y1="700" x2="345" y2="405" stroke="#1a0a04" stroke-width="2"/>
+<line x1="352" y1="700" x2="348" y2="415" stroke="#1a0a04" stroke-width="2.2"/>
+<ellipse cx="335" cy="393" rx="5" ry="16" fill="#2a1004"/>
+<ellipse cx="345" cy="403" rx="4" ry="13" fill="#2a1004"/>
+<ellipse cx="348" cy="413" rx="4.5" ry="14" fill="#2a1004"/>
+<path d="M150 180 Q160 172 170 180" stroke="#0a0a14" stroke-width="1.5" fill="none"/>
+<path d="M190 160 Q202 151 214 160" stroke="#0a0a14" stroke-width="1.5" fill="none"/>
+<path d="M240 195 Q250 188 260 195" stroke="#0a0a14" stroke-width="1.2" fill="none"/>
+<text x="200" y="685" text-anchor="middle" font-family="Georgia,serif" font-size="13" fill="#f8d080" opacity="0.5" font-style="italic">Sera Dorata</text>`,
+
+// 2 — ASTRATTO
+`<defs>
+  <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#1a0a08"/>
+    <stop offset="100%" stop-color="#0a0808"/>
+  </linearGradient>
+  <filter id="blur1"><feGaussianBlur stdDeviation="18"/></filter>
+  <filter id="blur2"><feGaussianBlur stdDeviation="28"/></filter>
+  <filter id="blur3"><feGaussianBlur stdDeviation="12"/></filter>
+</defs>
+<rect width="400" height="700" fill="url(#bg2)"/>
+<rect x="-20" y="60" width="440" height="200" fill="#8a2010" opacity="0.85" filter="url(#blur1)"/>
+<rect x="-20" y="60" width="440" height="200" fill="#c04020" opacity="0.6" filter="url(#blur2)"/>
+<rect x="20" y="90" width="360" height="140" fill="#e06030" opacity="0.4" filter="url(#blur1)"/>
+<rect x="-20" y="300" width="440" height="200" fill="#6a4010" opacity="0.9" filter="url(#blur1)"/>
+<rect x="-20" y="310" width="440" height="180" fill="#c08020" opacity="0.55" filter="url(#blur2)"/>
+<rect x="30" y="330" width="340" height="130" fill="#e0a030" opacity="0.35" filter="url(#blur1)"/>
+<rect x="-20" y="530" width="440" height="200" fill="#3a1808" opacity="0.95" filter="url(#blur1)"/>
+<rect x="-20" y="540" width="440" height="170" fill="#8a3010" opacity="0.5" filter="url(#blur2)"/>
+<ellipse cx="200" cy="160" rx="120" ry="60" fill="#f08040" opacity="0.15" filter="url(#blur1)"/>
+<ellipse cx="200" cy="400" rx="140" ry="70" fill="#f8c040" opacity="0.12" filter="url(#blur2)"/>
+<rect x="0" y="258" width="400" height="3" fill="#0a0808" opacity="0.8"/>
+<rect x="0" y="500" width="400" height="3" fill="#0a0808" opacity="0.8"/>
+<rect x="0" y="255" width="400" height="1" fill="#e08030" opacity="0.15"/>
+<rect x="0" y="497" width="400" height="1" fill="#e09020" opacity="0.12"/>
+<rect x="0" y="0" width="30" height="700" fill="#0a0808" opacity="0.5"/>
+<rect x="370" y="0" width="30" height="700" fill="#0a0808" opacity="0.5"/>
+<rect x="0" y="0" width="400" height="40" fill="#0a0808" opacity="0.6"/>
+<rect x="0" y="660" width="400" height="40" fill="#0a0808" opacity="0.6"/>
+<rect x="0" y="0" width="400" height="700" fill="none" stroke="#2a1408" stroke-width="8" opacity="0.8"/>
+<text x="200" y="688" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="#c08040" opacity="0.3" font-style="italic">Calore III</text>`
+
+];
+
+function selectArt(idx) {
+  selArt = idx;
+  for (var i = 0; i < 4; i++) {
+    var btn = document.getElementById('art' + i);
+    if (btn) btn.className = 'art-btn' + (i === idx ? ' sel' : '');
+  }
+  var wrap = document.getElementById('own-photo-wrap');
+  if (wrap) wrap.className = idx === 3 ? 'vis' : '';
+}
+
+function showGallery() {
+  var ov = document.getElementById('gallery-overlay');
+  var svg = document.getElementById('gallery-svg');
+
+  if (selArt === 3) {
+    if (!ownPhotoUrl) {
+      setStatus('', 'Scegli prima una foto tramite "Foto mia"');
+      return;
+    }
+    svg.innerHTML = '';
+    var oldImg = document.getElementById('gallery-own-img');
+    if (oldImg) oldImg.remove();
+    var img = document.createElement('img');
+    img.id = 'gallery-own-img';
+    img.src = ownPhotoUrl;
+    img.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block';
+    ov.appendChild(img);
+  } else {
+    var oldImg2 = document.getElementById('gallery-own-img');
+    if (oldImg2) oldImg2.remove();
+    svg.innerHTML = artworks[selArt];
+  }
+
+  ov.className = 'vis';
+  galleryOpen = true;
+
+  var hint = document.getElementById('gallery-hint');
+  if (hint) {
+    hint.style.opacity = '1';
+    setTimeout(function() { hint.style.opacity = '0'; }, 6000);
+  }
+
+  if (document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(function(){});
+  }
+}
+
+function hideGallery() {
+  document.getElementById('gallery-overlay').className = '';
+  galleryOpen = false;
+  if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
+}
+
+// ═══════════════════════════════
+//  BLUETOOTH / USCITA AUDIO
+// ═══════════════════════════════
+var audioOut = 'phone';
+
+function setAudioOut(mode) {
+  audioOut = mode;
+  document.getElementById('bt-phone').className = 'tglbtn' + (mode==='phone'?' on':'');
+  document.getElementById('bt-blue').className  = 'tglbtn' + (mode==='bluetooth'?' on':'');
+  document.getElementById('bt-note').style.display = mode==='bluetooth' ? '' : 'none';
+  saveSettings();
+}
+
+// ═══════════════════════════════
+//  FOTO PERSONALE
+// ═══════════════════════════════
+var ownPhotoUrl = null;
+
+function loadOwnPhoto(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (ownPhotoUrl) URL.revokeObjectURL(ownPhotoUrl);
+  ownPhotoUrl = URL.createObjectURL(file);
+  var prev = document.getElementById('own-photo-preview');
+  prev.src = ownPhotoUrl;
+  prev.className = 'vis';
+  document.getElementById('own-photo-lbl').textContent = '✓ ' + file.name;
+  selectArt(3);
+}
+
+// ═══════════════════════════════
+//  WAKELOCK — mantieni schermo acceso
+// ═══════════════════════════════
+var wakeLock = null;
+var wakeActive = false;
+
+function toggleWake() {
+  if (wakeActive) {
+    releaseWake();
+  } else {
+    requestWake();
+  }
+}
+
+function requestWake() {
+  if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').then(function(lock) {
+      wakeLock = lock;
+      wakeActive = true;
+      updateWakeBtn();
+      lock.addEventListener('release', function() {
+        wakeActive = false;
+        wakeLock = null;
+        updateWakeBtn();
+      });
+    }).catch(function() {
+      wakeActive = false;
+      updateWakeBtn();
+    });
+  } else {
+    startSilentKeepAwake();
+    wakeActive = true;
+    updateWakeBtn();
+  }
+}
+
+function releaseWake() {
+  if (wakeLock) { wakeLock.release(); wakeLock = null; }
+  stopSilentKeepAwake();
+  wakeActive = false;
+  updateWakeBtn();
+}
+
+function updateWakeBtn() {
+  var btn = document.getElementById('wake-btn');
+  if (!btn) return;
+  if (wakeActive) {
+    btn.className = 'hide-btn wake on';
+    btn.textContent = '☀ Schermo rimane acceso';
+  } else {
+    btn.className = 'hide-btn wake';
+    btn.textContent = '☀ Tieni schermo attivo';
+  }
+}
+
+var silentTimer = null;
+function startSilentKeepAwake() {
+  stopSilentKeepAwake();
+  silentTimer = setInterval(function() {
+    try {
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      var buf = ctx.createBuffer(1, 1, 22050);
+      var src = ctx.createBufferSource();
+      src.buffer = buf; src.connect(ctx.destination); src.start(0);
+      setTimeout(function(){ ctx.close(); }, 500);
+    } catch(e) {}
+  }, 20000);
+}
+function stopSilentKeepAwake() {
+  if (silentTimer) { clearInterval(silentTimer); silentTimer = null; }
+}
+
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible' && wakeActive && !wakeLock) {
+    requestWake();
+  }
+});
+
+// ═══════════════════════════════
+//  OSCURAMENTO SCHERMO
+// ═══════════════════════════════
+var dimmed = false;
+
+function dimScreen() {
+  var ov = document.getElementById('dim-overlay');
+  ov.className = 'vis';
+  setTimeout(function() { ov.className = 'vis dark'; }, 30);
+  dimmed = true;
+}
+
+function undimScreen() {
+  var ov = document.getElementById('dim-overlay');
+  ov.className = 'vis';
+  setTimeout(function() { ov.className = ''; dimmed = false; }, 600);
+}
+
+// ═══════════════════════════════
+//  MODALITÀ DURATA
+// ═══════════════════════════════
+function setDurMode(m) {
+  durMode = m;
+  document.getElementById('dm-hand').className = 'tglbtn' + (m==='manual'?' on':'');
+  document.getElementById('dm-mp3').className  = 'tglbtn' + (m==='mp3'?' on':'');
+  document.getElementById('dur-slider').style.display = m==='manual'?'':'none';
+  document.getElementById('dur-note').style.display   = m==='mp3'?'':'none';
+  document.getElementById('lbl-dur').textContent      = m==='mp3'?'(durata MP3)':fmtSec(document.getElementById('rng-dur').value);
+  saveSettings();
+}
+
+// ═══════════════════════════════
+//  HELPER UI
+// ═══════════════════════════════
+function setStatus(cls, txt) {
+  document.getElementById('sdot').className = 'sdot' + (cls?' '+cls:'');
+  document.getElementById('stxt').textContent = txt;
+}
+
+function setRipple(on) {
+  document.getElementById('ripple').className = 'ripple-wrap' + (on?' vis':'');
+}
+
+function updRange(el, lblId, isSec) {
+  var v = parseInt(el.value);
+  document.getElementById(lblId).textContent = isSec ? fmtSec(v) : v;
+  var pct = ((v-el.min)/(el.max-el.min)*100).toFixed(1)+'%';
+  el.style.background = 'linear-gradient(to right,var(--sage) '+pct+',var(--cream) '+pct+')';
+}
+
+function fmtSec(s) {
+  s = Math.round(s);
+  if (s < 60) return s + ' sec';
+  var m = Math.floor(s/60), r = s%60;
+  return m + ' min' + (r?' '+r+' sec':'');
+}
+</script>
+</body>
+</html>
