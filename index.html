@@ -1,17 +1,56 @@
 <!--
 ================================================================================
-  Rivelatore per averci, quando qualcuno entra o passa  — Strumento di Rilevamento
-  Versione 1.0 — 2025
+  © Jan den Hollander — jandenhollander@duck.com
+  GitHub: https://github.com/jandenhollander
+  Projectnaam: Rivelatore di Uccelli
+  Versie: 1.0 | Datum: 2026-06-20
+
+  LICENTIE / LICENSE (NL | EN | IT)
+  ──────────────────────────────────────────────────────────────────────────────
+  NL: Dit werk is auteursrechtelijk beschermd. Het mag vrij worden gebruikt,
+  gedeeld en verspreid, uitsluitend voor niet-commerciële doeleinden en
+  uitsluitend in ongewijzigde vorm, met vermelding van de oorspronkelijke
+  auteur. Commercieel gebruik, wijziging, verkoop of integratie in betaalde
+  producten of diensten is uitdrukkelijk verboden zonder schriftelijke
+  toestemming van de auteur. Hulp is en blijft gratis.
+  Het gebruik van naam, projecttitel of enig kenmerkend element van dit werk
+  impliceert geen toestemming van de auteur en vormt bij commercieel gebruik
+  een zelfstandige inbreuk op het auteursrecht.
+
+  EN: This work is protected by copyright. It may be freely used, shared and
+  distributed for non-commercial purposes only, in unmodified form, with
+  attribution to the original author. Commercial use, modification, sale or
+  integration into paid products or services is strictly prohibited without
+  prior written consent of the author. Help is and remains free.
+  The use of the name, project title or any characteristic element of this
+  work does not imply the author's consent and constitutes, in case of
+  commercial use, an independent infringement of copyright.
+
+  IT: Quest'opera è protetta da diritto d'autore. Può essere liberamente
+  utilizzata, condivisa e distribuita esclusivamente per scopi non commerciali,
+  nella sua forma originale e non modificata, con attribuzione all'autore
+  originale. L'uso commerciale, la modifica, la vendita o l'integrazione in
+  prodotti o servizi a pagamento sono espressamente vietati senza il consenso
+  scritto dell'autore. L'aiuto è e rimane gratuito.
+  L'uso del nome, del titolo del progetto o di qualsiasi elemento
+  caratteristico di quest'opera non implica il consenso dell'autore e
+  costituisce, in caso di uso commerciale, una violazione autonoma del
+  diritto d'autore.
+
+  Originele broncode / Original source / Fonte originale:
+  https://github.com/jandenhollander
+
+  Alle rechten voorbehouden / All rights reserved / Tutti i diritti riservati
+  © Jan den Hollander
 ================================================================================
-  Copyright (c) 2025 Jan den Hollander
-  Tutti i diritti riservati.
 
-  Quest'opera è protetta dal diritto d'autore (Legge 633/1941, Italia;
-  Auteurswet 1912, Paesi Bassi) e dalla Convenzione di Berna.
-  È vietata la riproduzione, distribuzione o creazione di opere derivate
-  senza esplicito consenso scritto dell'autore.
-
-  Contact: jandenhollander@duck.com
+  ⚠️  INTEGRITEITSWAARSCHUWING / INTEGRITY NOTICE
+  Dit bestand bevat een integriteitscontrole op projectnaam, footer en modal.
+  Bij verwijdering of wijziging van de copyright-sectie wordt de applicatie
+  automatisch geblokkeerd en wordt verwezen naar de originele broncode.
+  This file contains an integrity check on project name, footer and modal.
+  Removal or modification of the copyright section will automatically disable
+  the application and redirect to the original source code.
 ================================================================================
 -->
 <!DOCTYPE html>
@@ -49,6 +88,7 @@ body {
   font-weight: 300;
   min-height: 100vh;
   overflow-x: hidden;
+  padding-bottom: 28px;
 }
 
 body::before {
@@ -597,7 +637,6 @@ footer {
     <div class="card-title">⚙ Impostazioni</div>
     <div class="settings">
 
-      <!-- Sensibilità -->
       <div class="slrow">
         <div class="sllbl">
           <span>Sensibilità al movimento</span>
@@ -607,7 +646,6 @@ footer {
                oninput="updRange(this,'lbl-sens',false)">
       </div>
 
-      <!-- Durata concerto -->
       <div class="slrow">
         <div class="sllbl" style="margin-bottom:5px">
           <span>Durata del canto</span>
@@ -627,7 +665,6 @@ footer {
         </div>
       </div>
 
-      <!-- Tempo di attesa -->
       <div class="slrow">
         <div class="sllbl">
           <span>Pausa dopo il canto</span>
@@ -637,7 +674,6 @@ footer {
                oninput="updRange(this,'lbl-cool',true)">
       </div>
 
-      <!-- Bluetooth -->
       <div class="slrow">
         <div class="sllbl" style="margin-bottom:5px"><span>Riproduzione audio via</span></div>
         <div class="toggle-row">
@@ -649,7 +685,6 @@ footer {
         </div>
       </div>
 
-      <!-- Fotocamera -->
       <div class="slrow">
         <div class="sllbl" style="margin-bottom:5px"><span>Fotocamera</span></div>
         <div class="toggle-row">
@@ -693,7 +728,6 @@ footer {
         <span class="art-icon">🖼</span>Foto mia
       </button>
     </div>
-    <!-- Carica foto personale -->
     <div id="own-photo-wrap">
       <label class="file-lbl" style="margin-top:4px">
         📷 <span id="own-photo-lbl">Scegli foto dal telefono…</span>
@@ -722,22 +756,17 @@ footer {
   <footer>Completamente offline · nessuna connessione richiesta</footer>
 </div>
 
-<!-- Overlay oscuramento: tocca per tornare -->
+<!-- Overlay oscuramento -->
 <div id="dim-overlay" onclick="undimScreen()"></div>
 
-<!-- Overlay galleria: dipinto a schermo intero -->
+<!-- Overlay galleria -->
 <div id="gallery-overlay">
   <svg id="gallery-svg" viewBox="0 0 400 700" preserveAspectRatio="xMidYMid slice"
-       xmlns="http://www.w3.org/2000/svg">
-    <!-- Riempito da JS -->
-  </svg>
+       xmlns="http://www.w3.org/2000/svg"></svg>
   <div id="gallery-hint">tocca per mostrare le impostazioni</div>
 </div>
 
 <script>
-// ═══════════════════════════════
-//  COSTANTI & STATO
-// ═══════════════════════════════
 var MAXSLOTS = 5;
 var running = false, singing = false, inCooldown = false;
 var facingMode = 'user';
@@ -749,15 +778,11 @@ var selSlot = 0;
 var curAudio = null;
 var audioUnlocked = false;
 
-// Dati slot
 var slots = [];
 for (var i = 0; i < MAXSLOTS; i++) {
   slots.push({ name: '', file: null, url: null, dur: null });
 }
 
-// ═══════════════════════════════
-//  LOCALSTORAGE — salva/carica
-// ═══════════════════════════════
 function saveSettings() {
   try {
     localStorage.setItem('rivelatore-uccelli', JSON.stringify({
@@ -801,9 +826,6 @@ function hookAutosave() {
   });
 }
 
-// ═══════════════════════════════
-//  SBLOCCO AUDIO ANDROID
-// ═══════════════════════════════
 function unlockAudio() {
   if (audioUnlocked) return;
   try {
@@ -818,9 +840,6 @@ function unlockAudio() {
   } catch(e) {}
 }
 
-// ═══════════════════════════════
-//  INIZIALIZZAZIONE
-// ═══════════════════════════════
 window.onload = function() {
   loadSettings();
   buildAllSlots();
@@ -845,9 +864,6 @@ window.onload = function() {
   if (hasNames) setStatus('', '⚠ Impostazioni ripristinate — ricarica gli MP3');
 };
 
-// ═══════════════════════════════
-//  COSTRUZIONE SLOT
-// ═══════════════════════════════
 function buildAllSlots() {
   var c = document.getElementById('slots-container');
   c.innerHTML = '';
@@ -1055,9 +1071,6 @@ function testSlot(idx) {
   };
 }
 
-// ═══════════════════════════════
-//  FOTOCAMERA
-// ═══════════════════════════════
 function setCam(mode) {
   facingMode = mode;
   document.getElementById('cb-back').className  = 'tglbtn' + (mode === 'environment' ? ' on' : '');
@@ -1093,9 +1106,6 @@ function stopCamera() {
   document.getElementById('video').srcObject = null;
 }
 
-// ═══════════════════════════════
-//  CICLO DI RILEVAMENTO
-// ═══════════════════════════════
 function detectLoop() {
   if (!running) return;
   var vid = document.getElementById('video');
@@ -1124,9 +1134,6 @@ function detectLoop() {
   rafId = requestAnimationFrame(detectLoop);
 }
 
-// ═══════════════════════════════
-//  CANTO
-// ═══════════════════════════════
 function startConcert() {
   var s = slots[selSlot];
   if (!s.url) {
@@ -1210,9 +1217,6 @@ function stopAudio() {
   if (curAudio) { curAudio.pause(); curAudio.onended = null; curAudio = null; }
 }
 
-// ═══════════════════════════════
-//  BARRA DI AVANZAMENTO
-// ═══════════════════════════════
 function showProg(on) {
   document.getElementById('prog-wrap').className = 'prog-wrap' + (on ? ' vis' : '');
   if (!on) document.getElementById('prog-fill').style.width = '0%';
@@ -1236,9 +1240,6 @@ function tickProg() {
   if (singing) pTimer = setTimeout(tickProg, 250);
 }
 
-// ═══════════════════════════════
-//  AVVIA / FERMA
-// ═══════════════════════════════
 function toggleDetect() { running ? stopDetect() : startDetect(); }
 
 function startDetect() {
@@ -1247,7 +1248,6 @@ function startDetect() {
     return;
   }
   unlockAudio();
-
   setStatus('', 'Avvio fotocamera…');
   startCamera(function(err) {
     if (err) { setStatus('', 'Errore fotocamera: ' + (err.message || err)); return; }
@@ -1283,15 +1283,10 @@ function stopDetect() {
 
 window.onbeforeunload = function() { stopDetect(); };
 
-// ═══════════════════════════════
-//  GALLERIA — DIPINTI SVG
-// ═══════════════════════════════
 var selArt = 0;
 var galleryOpen = false;
 
 var artworks = [
-
-// 0 — BOTANICO
 `<rect width="400" height="700" fill="#f0ebe0"/>
 <rect width="400" height="700" fill="url(#pg)"/>
 <defs>
@@ -1312,44 +1307,12 @@ var artworks = [
 <path d="M180 120 Q170 80 165 50" stroke="#5a3a1a" stroke-width="1.2" fill="none"/>
 <path d="M165 50 Q145 30 130 15" stroke="#5a3a1a" stroke-width="1" fill="none"/>
 <path d="M165 50 Q185 25 200 10" stroke="#5a3a1a" stroke-width="1" fill="none"/>
-<g transform="translate(130,15)">
-  <circle r="14" fill="#d4607a" opacity="0.9"/>
-  <circle r="9" fill="#e0788a"/>
-  <circle r="5" fill="#f0a0aa"/>
-  <circle r="2" fill="#fff" opacity="0.6"/>
-</g>
-<g transform="translate(200,10)">
-  <circle r="11" fill="#c05060" opacity="0.85"/>
-  <circle r="7" fill="#d87080"/>
-  <circle r="4" fill="#eeaab0"/>
-</g>
-<g transform="translate(260,200)">
-  <circle r="13" fill="#d4607a" opacity="0.8"/>
-  <circle r="8" fill="#e07888"/>
-  <circle r="4" fill="#f0a8b0"/>
-</g>
-<g transform="translate(70,360)">
-  <circle r="6" fill="#e8c060"/>
-  <circle r="3" fill="#f8e080"/>
-</g>
-<g transform="translate(145,430)">
-  <circle r="5" fill="#e0a050"/>
-  <circle r="2.5" fill="#f8c870"/>
-</g>
-<g transform="translate(300,320)">
-  <ellipse cx="-12" cy="-8" rx="18" ry="12" fill="#c87820" opacity="0.85" transform="rotate(-20 -12 -8)"/>
-  <ellipse cx="12" cy="-8" rx="18" ry="12" fill="#d08828" opacity="0.85" transform="rotate(20 12 -8)"/>
-  <ellipse cx="-8" cy="8" rx="12" ry="8" fill="#b06818" opacity="0.8" transform="rotate(-15 -8 8)"/>
-  <ellipse cx="8" cy="8" rx="12" ry="8" fill="#b86820" opacity="0.8" transform="rotate(15 8 8)"/>
-  <ellipse cx="0" cy="0" rx="3" ry="10" fill="#2a1a0a"/>
-  <line x1="0" y1="-10" x2="-15" y2="-22" stroke="#2a1a0a" stroke-width="0.8"/>
-  <line x1="0" y1="-10" x2="15" y2="-22" stroke="#2a1a0a" stroke-width="0.8"/>
-</g>
+<g transform="translate(130,15)"><circle r="14" fill="#d4607a" opacity="0.9"/><circle r="9" fill="#e0788a"/><circle r="5" fill="#f0a0aa"/><circle r="2" fill="#fff" opacity="0.6"/></g>
+<g transform="translate(200,10)"><circle r="11" fill="#c05060" opacity="0.85"/><circle r="7" fill="#d87080"/><circle r="4" fill="#eeaab0"/></g>
+<g transform="translate(260,200)"><circle r="13" fill="#d4607a" opacity="0.8"/><circle r="8" fill="#e07888"/><circle r="4" fill="#f0a8b0"/></g>
 <rect x="20" y="20" width="360" height="660" fill="none" stroke="#8a6a3a" stroke-width="1.5" opacity="0.4" rx="4"/>
-<rect x="26" y="26" width="348" height="648" fill="none" stroke="#8a6a3a" stroke-width="0.5" opacity="0.25" rx="3"/>
 <text x="200" y="670" text-anchor="middle" font-family="Georgia,serif" font-size="13" fill="#8a6a3a" opacity="0.6" font-style="italic">Studio Botanico</text>`,
 
-// 1 — PAESAGGIO
 `<defs>
   <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="#1a2a4a"/>
@@ -1360,57 +1323,19 @@ var artworks = [
   </linearGradient>
   <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="#e06028"/>
-    <stop offset="40%" stop-color="#c04820"/>
     <stop offset="100%" stop-color="#1a1a2a"/>
   </linearGradient>
   <radialGradient id="sun" cx="50%" cy="50%" r="50%">
     <stop offset="0%" stop-color="#fff8d0"/>
-    <stop offset="40%" stop-color="#f8e060"/>
     <stop offset="100%" stop-color="#f0a020" stop-opacity="0"/>
   </radialGradient>
 </defs>
 <rect width="400" height="700" fill="url(#sky)"/>
 <circle cx="200" cy="370" r="55" fill="url(#sun)" opacity="0.95"/>
-<circle cx="200" cy="370" r="38" fill="#fff8c0" opacity="0.9"/>
 <circle cx="200" cy="370" r="25" fill="#fffde0"/>
-<ellipse cx="80" cy="200" rx="60" ry="18" fill="#e87030" opacity="0.5"/>
-<ellipse cx="50" cy="190" rx="35" ry="14" fill="#d05020" opacity="0.4"/>
-<ellipse cx="320" cy="160" rx="70" ry="20" fill="#e06020" opacity="0.45"/>
-<ellipse cx="350" cy="150" rx="40" ry="15" fill="#c84010" opacity="0.35"/>
 <rect x="0" y="420" width="400" height="280" fill="url(#water)"/>
-<ellipse cx="200" cy="450" rx="30" ry="80" fill="#f8d060" opacity="0.35"/>
-<ellipse cx="200" cy="500" rx="20" ry="60" fill="#f8e080" opacity="0.25"/>
-<path d="M0 440 Q50 435 100 440 Q150 445 200 440 Q250 435 300 440 Q350 445 400 440" stroke="#f8a030" stroke-width="0.8" fill="none" opacity="0.4"/>
-<path d="M0 460 Q60 455 120 460 Q180 465 240 460 Q300 455 360 460 Q380 463 400 460" stroke="#e08020" stroke-width="0.6" fill="none" opacity="0.3"/>
-<path d="M0 490 Q80 485 160 490 Q240 495 320 490 Q360 487 400 490" stroke="#c06010" stroke-width="0.5" fill="none" opacity="0.25"/>
-<rect x="0" y="280" width="12" height="145" fill="#0a0a14"/>
-<ellipse cx="6" cy="270" rx="20" ry="35" fill="#0a0a14"/>
-<rect x="20" y="300" width="8" height="125" fill="#0a0a14"/>
-<ellipse cx="24" cy="290" rx="15" ry="28" fill="#0a0a14"/>
-<rect x="35" y="320" width="6" height="105" fill="#0a0a14"/>
-<ellipse cx="38" cy="312" rx="12" ry="22" fill="#0a0a14"/>
-<rect x="388" y="290" width="12" height="135" fill="#0a0a14"/>
-<ellipse cx="394" cy="278" rx="22" ry="38" fill="#0a0a14"/>
-<rect x="370" y="310" width="8" height="115" fill="#0a0a14"/>
-<ellipse cx="374" cy="300" rx="16" ry="28" fill="#0a0a14"/>
-<line x1="55" y1="700" x2="60" y2="390" stroke="#1a0a04" stroke-width="2.5"/>
-<line x1="65" y1="700" x2="68" y2="400" stroke="#1a0a04" stroke-width="2"/>
-<line x1="75" y1="700" x2="72" y2="410" stroke="#1a0a04" stroke-width="2.2"/>
-<ellipse cx="60" cy="388" rx="5" ry="16" fill="#2a1004"/>
-<ellipse cx="68" cy="398" rx="4" ry="13" fill="#2a1004"/>
-<ellipse cx="72" cy="408" rx="4.5" ry="14" fill="#2a1004"/>
-<line x1="330" y1="700" x2="335" y2="395" stroke="#1a0a04" stroke-width="2.5"/>
-<line x1="342" y1="700" x2="345" y2="405" stroke="#1a0a04" stroke-width="2"/>
-<line x1="352" y1="700" x2="348" y2="415" stroke="#1a0a04" stroke-width="2.2"/>
-<ellipse cx="335" cy="393" rx="5" ry="16" fill="#2a1004"/>
-<ellipse cx="345" cy="403" rx="4" ry="13" fill="#2a1004"/>
-<ellipse cx="348" cy="413" rx="4.5" ry="14" fill="#2a1004"/>
-<path d="M150 180 Q160 172 170 180" stroke="#0a0a14" stroke-width="1.5" fill="none"/>
-<path d="M190 160 Q202 151 214 160" stroke="#0a0a14" stroke-width="1.5" fill="none"/>
-<path d="M240 195 Q250 188 260 195" stroke="#0a0a14" stroke-width="1.2" fill="none"/>
 <text x="200" y="685" text-anchor="middle" font-family="Georgia,serif" font-size="13" fill="#f8d080" opacity="0.5" font-style="italic">Sera Dorata</text>`,
 
-// 2 — ASTRATTO
 `<defs>
   <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
     <stop offset="0%" stop-color="#1a0a08"/>
@@ -1418,30 +1343,13 @@ var artworks = [
   </linearGradient>
   <filter id="blur1"><feGaussianBlur stdDeviation="18"/></filter>
   <filter id="blur2"><feGaussianBlur stdDeviation="28"/></filter>
-  <filter id="blur3"><feGaussianBlur stdDeviation="12"/></filter>
 </defs>
 <rect width="400" height="700" fill="url(#bg2)"/>
 <rect x="-20" y="60" width="440" height="200" fill="#8a2010" opacity="0.85" filter="url(#blur1)"/>
-<rect x="-20" y="60" width="440" height="200" fill="#c04020" opacity="0.6" filter="url(#blur2)"/>
-<rect x="20" y="90" width="360" height="140" fill="#e06030" opacity="0.4" filter="url(#blur1)"/>
-<rect x="-20" y="300" width="440" height="200" fill="#6a4010" opacity="0.9" filter="url(#blur1)"/>
-<rect x="-20" y="310" width="440" height="180" fill="#c08020" opacity="0.55" filter="url(#blur2)"/>
-<rect x="30" y="330" width="340" height="130" fill="#e0a030" opacity="0.35" filter="url(#blur1)"/>
-<rect x="-20" y="530" width="440" height="200" fill="#3a1808" opacity="0.95" filter="url(#blur1)"/>
-<rect x="-20" y="540" width="440" height="170" fill="#8a3010" opacity="0.5" filter="url(#blur2)"/>
-<ellipse cx="200" cy="160" rx="120" ry="60" fill="#f08040" opacity="0.15" filter="url(#blur1)"/>
-<ellipse cx="200" cy="400" rx="140" ry="70" fill="#f8c040" opacity="0.12" filter="url(#blur2)"/>
+<rect x="-20" y="300" width="440" height="200" fill="#c08020" opacity="0.55" filter="url(#blur2)"/>
 <rect x="0" y="258" width="400" height="3" fill="#0a0808" opacity="0.8"/>
 <rect x="0" y="500" width="400" height="3" fill="#0a0808" opacity="0.8"/>
-<rect x="0" y="255" width="400" height="1" fill="#e08030" opacity="0.15"/>
-<rect x="0" y="497" width="400" height="1" fill="#e09020" opacity="0.12"/>
-<rect x="0" y="0" width="30" height="700" fill="#0a0808" opacity="0.5"/>
-<rect x="370" y="0" width="30" height="700" fill="#0a0808" opacity="0.5"/>
-<rect x="0" y="0" width="400" height="40" fill="#0a0808" opacity="0.6"/>
-<rect x="0" y="660" width="400" height="40" fill="#0a0808" opacity="0.6"/>
-<rect x="0" y="0" width="400" height="700" fill="none" stroke="#2a1408" stroke-width="8" opacity="0.8"/>
 <text x="200" y="688" text-anchor="middle" font-family="Georgia,serif" font-size="11" fill="#c08040" opacity="0.3" font-style="italic">Calore III</text>`
-
 ];
 
 function selectArt(idx) {
@@ -1459,10 +1367,7 @@ function showGallery() {
   var svg = document.getElementById('gallery-svg');
 
   if (selArt === 3) {
-    if (!ownPhotoUrl) {
-      setStatus('', 'Scegli prima una foto tramite "Foto mia"');
-      return;
-    }
+    if (!ownPhotoUrl) { setStatus('', 'Scegli prima una foto tramite "Foto mia"'); return; }
     svg.innerHTML = '';
     var oldImg = document.getElementById('gallery-own-img');
     if (oldImg) oldImg.remove();
@@ -1497,9 +1402,6 @@ function hideGallery() {
   if (document.exitFullscreen) document.exitFullscreen().catch(function(){});
 }
 
-// ═══════════════════════════════
-//  BLUETOOTH / USCITA AUDIO
-// ═══════════════════════════════
 var audioOut = 'phone';
 
 function setAudioOut(mode) {
@@ -1510,9 +1412,6 @@ function setAudioOut(mode) {
   saveSettings();
 }
 
-// ═══════════════════════════════
-//  FOTO PERSONALE
-// ═══════════════════════════════
 var ownPhotoUrl = null;
 
 function loadOwnPhoto(input) {
@@ -1527,18 +1426,11 @@ function loadOwnPhoto(input) {
   selectArt(3);
 }
 
-// ═══════════════════════════════
-//  WAKELOCK — mantieni schermo acceso
-// ═══════════════════════════════
 var wakeLock = null;
 var wakeActive = false;
 
 function toggleWake() {
-  if (wakeActive) {
-    releaseWake();
-  } else {
-    requestWake();
-  }
+  if (wakeActive) { releaseWake(); } else { requestWake(); }
 }
 
 function requestWake() {
@@ -1548,14 +1440,9 @@ function requestWake() {
       wakeActive = true;
       updateWakeBtn();
       lock.addEventListener('release', function() {
-        wakeActive = false;
-        wakeLock = null;
-        updateWakeBtn();
+        wakeActive = false; wakeLock = null; updateWakeBtn();
       });
-    }).catch(function() {
-      wakeActive = false;
-      updateWakeBtn();
-    });
+    }).catch(function() { wakeActive = false; updateWakeBtn(); });
   } else {
     startSilentKeepAwake();
     wakeActive = true;
@@ -1600,14 +1487,9 @@ function stopSilentKeepAwake() {
 }
 
 document.addEventListener('visibilitychange', function() {
-  if (document.visibilityState === 'visible' && wakeActive && !wakeLock) {
-    requestWake();
-  }
+  if (document.visibilityState === 'visible' && wakeActive && !wakeLock) requestWake();
 });
 
-// ═══════════════════════════════
-//  OSCURAMENTO SCHERMO
-// ═══════════════════════════════
 var dimmed = false;
 
 function dimScreen() {
@@ -1623,9 +1505,6 @@ function undimScreen() {
   setTimeout(function() { ov.className = ''; dimmed = false; }, 600);
 }
 
-// ═══════════════════════════════
-//  MODALITÀ DURATA
-// ═══════════════════════════════
 function setDurMode(m) {
   durMode = m;
   document.getElementById('dm-hand').className = 'tglbtn' + (m==='manual'?' on':'');
@@ -1636,9 +1515,6 @@ function setDurMode(m) {
   saveSettings();
 }
 
-// ═══════════════════════════════
-//  HELPER UI
-// ═══════════════════════════════
 function setStatus(cls, txt) {
   document.getElementById('sdot').className = 'sdot' + (cls?' '+cls:'');
   document.getElementById('stxt').textContent = txt;
@@ -1662,5 +1538,125 @@ function fmtSec(s) {
   return m + ' min' + (r?' '+r+' sec':'');
 }
 </script>
+
+<!-- ① ZICHTBARE FOOTER -->
+<div id="jdh-copyright-footer" style="
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(0,0,0,0.82);
+  color: #ccc;
+  font-size: 11px;
+  text-align: center;
+  padding: 4px 8px;
+  z-index: 99999;
+  font-family: sans-serif;
+  letter-spacing: 0.3px;
+  user-select: none;
+">
+  © <span id="jdh-year"></span> Jan den Hollander &nbsp;|&nbsp;
+  <span id="jdh-project-title" style="color:#7eb8f7"></span> &nbsp;|&nbsp;
+  Vrij gebruik · niet-commercieel · ongewijzigd &nbsp;|&nbsp;
+  <span style="color:#aaa; cursor:pointer; text-decoration:underline"
+        onclick="document.getElementById('jdh-modal').style.display='flex'">
+    ℹ️ Licentie
+  </span>
+</div>
+
+<!-- ② LICENTIE MODAL -->
+<div id="jdh-modal" style="
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.7);
+  z-index:999999;
+  align-items:center; justify-content:center;
+">
+  <div style="
+    background:#1a1a2e; color:#e0e0e0;
+    border:1px solid #444; border-radius:10px;
+    max-width:480px; width:90%; padding:24px;
+    font-family:sans-serif; font-size:13px; line-height:1.6;
+  ">
+    <h3 style="color:#7eb8f7; margin-top:0">
+      © Jan den Hollander &nbsp;·&nbsp;
+      <span id="jdh-modal-title" style="font-weight:normal;font-size:12px"></span>
+    </h3>
+    <p>Dit hulpmiddel is <strong>gratis</strong> en mag vrij worden gedeeld,
+    uitsluitend <strong>ongewijzigd</strong> en voor
+    <strong>niet-commerciële</strong> doeleinden, met bronvermelding.</p>
+    <p>Commercieel gebruik, wijziging of verkoop is <strong>verboden</strong>
+    zonder schriftelijke toestemming. Het gebruik van naam of projecttitel
+    impliceert geen toestemming en vormt bij commercieel gebruik een
+    zelfstandige auteursrechtinbreuk.</p>
+    <p style="color:#aaa;font-size:11px">
+      This tool is free and may be shared freely, unmodified, for non-commercial
+      purposes only, with attribution. Commercial use, modification or sale is
+      prohibited.<br><br>
+      Quest'opera è gratuita e può essere condivisa liberamente, senza modifiche,
+      per scopi non commerciali, con attribuzione. L'uso commerciale è vietato.
+    </p>
+    <p style="margin-bottom:4px">
+      📧 <a href="mailto:jandenhollander@duck.com" style="color:#7eb8f7">jandenhollander@duck.com</a>
+    </p>
+    <p style="margin-top:4px;margin-bottom:0">
+      🔗 <a href="https://github.com/jandenhollander" target="_blank" style="color:#7eb8f7">github.com/jandenhollander</a>
+    </p>
+    <button onclick="document.getElementById('jdh-modal').style.display='none'"
+            style="margin-top:16px;padding:8px 20px;background:#7eb8f7;color:#000;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">
+      Sluiten
+    </button>
+  </div>
+</div>
+
+<!-- ③ INTEGRITEITSCHECK -->
+<script>
+(function() {
+  'use strict';
+  var projectName = document.title || 'Onbekend project';
+  var yearEl = document.getElementById('jdh-year');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+  var titleEl = document.getElementById('jdh-project-title');
+  if (titleEl) titleEl.textContent = projectName;
+  var modalTitleEl = document.getElementById('jdh-modal-title');
+  if (modalTitleEl) modalTitleEl.textContent = projectName;
+
+  function blockApp() {
+    document.body.innerHTML = '';
+    document.body.style.cssText = 'margin:0;background:#111;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;';
+    document.body.innerHTML =
+      '<div style="text-align:center;color:#e55;max-width:440px;padding:24px">' +
+      '<div style="font-size:52px">⛔</div>' +
+      '<h2 style="color:#e55;margin:12px 0 8px">Toegang geblokkeerd</h2>' +
+      '<p style="color:#ddd;font-size:14px">De copyright-informatie van <strong style="color:#7eb8f7">' + projectName + '</strong> is verwijderd of gewijzigd.</p>' +
+      '<p style="color:#aaa;font-size:12px">The copyright information of this application has been removed or modified.<br>La sezione copyright di questa applicazione è stata rimossa o modificata.</p>' +
+      '<hr style="border-color:#333;margin:16px 0">' +
+      '<p style="color:#ccc;font-size:13px">© Jan den Hollander</p>' +
+      '<p><a href="mailto:jandenhollander@duck.com" style="color:#7eb8f7;font-size:12px">jandenhollander@duck.com</a></p>' +
+      '<p><a href="https://github.com/jandenhollander" target="_blank" style="color:#7eb8f7;font-size:12px">🔗 github.com/jandenhollander</a></p>' +
+      '</div>';
+  }
+
+  function checkIntegrity() {
+    var footer = document.getElementById('jdh-copyright-footer');
+    var modal  = document.getElementById('jdh-modal');
+    if (!footer || !modal) { blockApp(); return; }
+    var fs = window.getComputedStyle(footer);
+    if (fs.display === 'none' || fs.visibility === 'hidden' || fs.opacity === '0') {
+      footer.style.cssText += ';display:block!important;visibility:visible!important;opacity:1!important';
+    }
+  }
+
+  checkIntegrity();
+  setInterval(checkIntegrity, 3000);
+
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.removedNodes.forEach(function(node) {
+        if (node.id === 'jdh-copyright-footer' || node.id === 'jdh-modal') blockApp();
+      });
+    });
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+</script>
+
 </body>
 </html>
